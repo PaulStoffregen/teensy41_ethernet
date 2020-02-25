@@ -369,33 +369,16 @@ void tcprx() {
     Serial.println("server listening on 5001");
     pcba = NULL;    // accept PCB
     tcp_accept(pcbl, accept_callback);
-    // uint32_t prev = inpkts;
-    uint32_t ms = millis();
     while (pcba == NULL)  {
-      if (millis() - ms > 60000) {
-        Serial.println("accept timedout");
-        tcp_close(pcbl);
-        return;
-      }
-      //   if (inpkts != prev) { Serial.print("inpkts "); Serial.println(inpkts);
-      //     prev=inpkts;}
       loop();   // waiting connection
     }
     tcp_err(pcba, tcperr_callback);
     tcp_recv(pcba, recv_callback);  // all the action is now in callback
-    ms = millis();
     while (tcprx_running) {
-      if (millis() - ms > 5000) {
-        Serial.println(" timedout");
-        return;
-      }
       loop();  // wait til close
     }
     tcprx_running = true;
-  }
-  Serial.println("fall through");
-  tcp_close(pcbl);
-  // fall through to main ether_poll loop ....
+  }   // while
 }
 
 void setup()
