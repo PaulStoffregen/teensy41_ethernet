@@ -348,6 +348,8 @@ err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t er
 
     tcp_close(tpcb);
     tcprx_running = false;
+    bytes = 0;
+    t0 = 0;
     return 0;
   }
   tcp_recved(tpcb, p->tot_len);  // data processed
@@ -439,7 +441,7 @@ void setup()
   //udp_sink();
   // udp_echo(10, 8);
   //udp_echo(2, 8); udp_blast(20, 1000); // blast needs echo to run first ?
- // udp_ntp(100);   // NTP query and drift check
+  // udp_ntp(100);   // NTP query and drift check
   //tcptx(10000);
   tcprx();
 
