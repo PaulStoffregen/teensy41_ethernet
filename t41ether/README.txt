@@ -1,4 +1,4 @@
-    Teensy 4.1 ethernet
+    Teensy 4.1 ethernet :: https://forum.pjrc.com/threads/59776-Ethernet-and-lwip
 
 etherraw/   UDP additions to Paul's low-level ethernet sketch, hand-crafted UDP
             packets
