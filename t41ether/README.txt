@@ -1,4 +1,4 @@
-    Teensy 4.1 ethernet
+    Teensy 4.1 ethernet :: https://forum.pjrc.com/threads/59776-Ethernet-and-lwip
 
 etherraw/   UDP additions to Paul's low-level ethernet sketch, hand-crafted UDP
             packets
@@ -11,6 +11,9 @@ lwip apps
 
 To build lwip apps in IDE you must add an include path to boards.txt
  teensy41.build.flags.common=-g -Wall -ffunction-sections -fdata-sections -nostdlib -I/home/dunigan/sketchbook/libraries/lwip/src/include
+ 
+ And for Windows
+ teensy41.build.flags.common=-g -Wall -ffunction-sections -fdata-sections -nostdlib -IT:\tCode\libraries\lwip\src\include
 
 The lwip lib (2.0.2) and apps are adapted from the 2016 T3.6 beta test of 
 limited-production ethernet shield. T41 lwIP configured to use 64-byte aligned
