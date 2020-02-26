@@ -99,7 +99,7 @@ void enet_isr() {
 }
 
 // initialize the ethernet hardware
-void setup()
+void e_init()
 {
   while (!Serial) ; // wait
   print("Ethernet Testing");
@@ -281,68 +281,9 @@ void setup()
   delay(2500);
   printhex("BMCR: ", mdio_read(0, 0));
   printhex("BMSR: ", mdio_read(0, 1));
-
-  prregs();
-  arp_request(manitou);
-  uint8_t mybuff[8];
-  //  sendto(mybuff,sizeof(mybuff),4444,manitou, 7654); // to uechosrv
-  //  udp_blast(20,1000);
-  udp_echo(20);  // to uechosrv
-  // udp_ntp(5,5000);  // make some ntp queries
-  // udp_tcp(1000);
 }
-
-elapsedMillis msec;
 
 static int rxnum = 0; // need outside for loop or check_rx
-// watch for data to arrive
-void loop()
-{
-  static uint32_t rx_packet_count = 0;
-
-  volatile enetbufferdesc_t *buf;
-
-  buf = rx_ring + rxnum;
-
-  if ((buf->flags & 0x8000) == 0) {
-    incoming(buf->buffer, buf->length);
-    if (rxnum < RXSIZE - 1) {
-      buf->flags = 0x8000;
-      rxnum++;
-    } else {
-      buf->flags = 0xA000;
-      rxnum = 0;
-    }
-  }
-  if (!(ENET_RDAR & ENET_RDAR_RDAR)) {
-    print("receiver not active\n");
-  }
-#if 0
-  uint32_t n = ENET_RMON_R_PACKETS;
-  if (n != rx_packet_count) {
-    rx_packet_count = n;
-    Serial.printf("rx packets: %u\n", n);
-  }
-#endif
-  if (msec > 5000) {
-    msec = 0;
-    Serial.printf("EIR=%08X, len=%d, R=%X\n", ENET_EIR, rx_ring[0].length, ENET_RMON_R_OCTETS);
-    Serial.printf("in %d out %d arp %d ip %d  tcp %d udp %d ulth %d icmp %d bcast %d mcast %d\n",
-                  inpkts, outpkts, apkts, ippkts, tpkts, upkts, ulth, ipkts, bcast, mcast);
-    Serial.printf("rxcnt %d txcnt %d\n", rxcnt, txcnt);
-    if (us0) {
-      Serial.printf("USB %d us\n", us - us0);
-      us0 = 0;
-    }
-  }
-  // TODO: if too many packets arrive too quickly, which is
-  // a distinct possibility when we spend so much time printing
-  // to the serial monitor, ENET_RDAR_RDAR can be cleared if
-  // the receive ring buffer fills up.  After we free up space,
-  // ENET_RDAR_RDAR needs to be set again to restart reception
-  // of incoming packets.
-}
-
 // watch for data to arrive, quietly
 void check_rx()
 {
@@ -944,4 +885,65 @@ void printpacket(const uint8_t *data, unsigned int len)
   }
   Serial.println();
 #endif
+}
+
+void setup() {
+  e_init();
+  prregs();
+  arp_request(manitou);
+  uint8_t mybuff[8];
+  //  sendto(mybuff,sizeof(mybuff),4444,manitou, 7654); // to uechosrv
+  //  udp_blast(20,1000);
+  udp_echo(20);  // to uechosrv
+  // udp_ntp(5,5000);  // make some ntp queries
+  // udp_tcp(1000);
+}
+
+elapsedMillis msec;
+
+void loop()
+{
+  static uint32_t rx_packet_count = 0;
+
+  volatile enetbufferdesc_t *buf;
+
+  buf = rx_ring + rxnum;
+
+  if ((buf->flags & 0x8000) == 0) {
+    incoming(buf->buffer, buf->length);
+    if (rxnum < RXSIZE - 1) {
+      buf->flags = 0x8000;
+      rxnum++;
+    } else {
+      buf->flags = 0xA000;
+      rxnum = 0;
+    }
+  }
+  if (!(ENET_RDAR & ENET_RDAR_RDAR)) {
+    print("receiver not active\n");
+  }
+#if 0
+  uint32_t n = ENET_RMON_R_PACKETS;
+  if (n != rx_packet_count) {
+    rx_packet_count = n;
+    Serial.printf("rx packets: %u\n", n);
+  }
+#endif
+  if (msec > 5000) {
+    msec = 0;
+    Serial.printf("EIR=%08X, len=%d, R=%X\n", ENET_EIR, rx_ring[0].length, ENET_RMON_R_OCTETS);
+    Serial.printf("in %d out %d arp %d ip %d  tcp %d udp %d ulth %d icmp %d bcast %d mcast %d\n",
+                  inpkts, outpkts, apkts, ippkts, tpkts, upkts, ulth, ipkts, bcast, mcast);
+    Serial.printf("rxcnt %d txcnt %d\n", rxcnt, txcnt);
+    if (us0) {
+      Serial.printf("USB %d us\n", us - us0);
+      us0 = 0;
+    }
+  }
+  // TODO: if too many packets arrive too quickly, which is
+  // a distinct possibility when we spend so much time printing
+  // to the serial monitor, ENET_RDAR_RDAR can be cleared if
+  // the receive ring buffer fills up.  After we free up space,
+  // ENET_RDAR_RDAR needs to be set again to restart reception
+  // of incoming packets.
 }
