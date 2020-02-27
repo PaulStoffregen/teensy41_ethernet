@@ -12,6 +12,7 @@ lwip sketches
   lwip_mcast/       multicast listener, does one chirp
   lwip_perf/        various UDP/TCP client/server tests
   lwip_sntp/        NTP (UDP) poll of server (default 10 minutes)
+  lwip_tftpd/       tftp server (UDP) using SD lib and microSD
   lwip_webclnt/     send http GET to a web server
   lwip_websrv/      serve up embedded html and manipulate LED
 
