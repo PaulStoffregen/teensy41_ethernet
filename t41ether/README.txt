@@ -5,9 +5,16 @@ etherraw/   UDP additions to Paul's low-level ethernet sketch, hand-crafted UDP
 
 lwip/    put this in your sketchbook/libraries/
 
-lwip apps
-  lwip_dns/	  lwip_iperf/  lwip_perf/  lwip_webclnt/
-  lwip_echosrv/  lwip_mcast/  lwip_sntp/  lwip_websrv/
+lwip sketches
+  lwip_dns/         demonstrate DNS queries
+  lwip_echosrv/     TCP and UDP echo servers on port 7
+  lwip_iperf/       TCP iperf(v2) server on port 5001
+  lwip_mcast/       multicast listener, does one chirp
+  lwip_perf/        various UDP/TCP client/server tests
+  lwip_sntp/        NTP (UDP) poll of server (default 10 minutes)
+  lwip_webclnt/     send http GET to a web server
+  lwip_websrv/      serve up embedded html and manipulate LED
+
 
 To build lwip apps in IDE you must add an include path to boards.txt
  teensy41.build.flags.common=-g -Wall -ffunction-sections -fdata-sections -nostdlib -I/home/dunigan/sketchbook/libraries/lwip/src/include
