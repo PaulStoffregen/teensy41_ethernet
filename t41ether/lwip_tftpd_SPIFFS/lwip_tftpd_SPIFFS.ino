@@ -225,7 +225,11 @@ void loop()
 #define PINS1           FLEXSPI_LUT_NUM_PADS_1
 #define PINS4           FLEXSPI_LUT_NUM_PADS_4
 
+#define FLASH_MEMMAP 1 //Use memory-mapped access
+
+static const void* extBase = (void*)0x70000000u;
 static const uint32_t flashBaseAddr = 0x01000000u;
+static uint32_t flashCapacity = 16u * 1024u * 1024u;
 static char flashID[8];
 
 void setupFlexSPI2() {
@@ -369,7 +373,7 @@ void setupFlexSPI2() {
   FLEXSPI2_LUT53 = LUT0(WRITE_SDR, PINS4, 1);
 
   //cmd index 14 = set read parameters
-  FLEXSPI2_LUT56 = LUT0(CMD_SDR, PINS4, 0xc0) | LUT1(CMD_SDR, PINS4, 0x20); //does not work(?)
+  FLEXSPI2_LUT56 = LUT0(CMD_SDR, PINS4, 0xc0) | LUT1(CMD_SDR, PINS4, 0x20);
 
   //cmd index 15 = enter QPI mode
   FLEXSPI2_LUT60 = LUT0(CMD_SDR, PINS1, 0x38);
@@ -392,15 +396,19 @@ void printStatusRegs() {
 #endif
 }
 
-void waitFlash(boolean visual = false) {
+/*
+   Waits for busy bit = 0 (statusregister #1 )
+   Timeout is optional
+*/
+bool waitFlash(uint32_t timeout = 0) {
   uint8_t val;
+  uint32_t t = millis();
   FLEXSPI_IPRXFCR = FLEXSPI_IPRXFCR_CLRIPRXF; // clear rx fifo
-  do { //Wait for busy-bit clear
+  do {
     flexspi_ip_read(8, flashBaseAddr, &val, 1 );
-    if (visual) {
-      Serial.print("."); delay(500);
-    }
+    if (timeout && (millis() - t > timeout)) return 1;
   } while  ((val & 0x01) == 1);
+  return 0;
 }
 
 void setupFlexSPI2Flash() {
@@ -411,7 +419,7 @@ void setupFlexSPI2Flash() {
   flexspi_ip_command(2, flashBaseAddr); //reset
   delayMicroseconds(50);
 
-  flexspi_ip_read(7, flashBaseAddr, flashID, sizeof(flashID) ); // flash begins at offset 0x01000000
+  flexspi_ip_read(7, flashBaseAddr, flashID, sizeof(flashID) );
 
 #if 0
   Serial.print("ID:");
@@ -502,22 +510,30 @@ static void flexspi_ip_write(uint32_t index, uint32_t addr, const void *data, ui
   FLEXSPI2_IPCR1 = FLEXSPI_IPCR1_ISEQID(index) | FLEXSPI_IPCR1_IDATSZ(length);
   src = (const uint8_t *)data;
   FLEXSPI2_IPCMD = FLEXSPI_IPCMD_TRG;
+
   while (!((n = FLEXSPI2_INTR) & FLEXSPI_INTR_IPCMDDONE)) {
+
     if (n & FLEXSPI_INTR_IPTXWE) {
       wrlen = length;
       if (wrlen > 8) wrlen = 8;
       if (wrlen > 0) {
-        //Serial.print("%");
-        memcpy((void *)&FLEXSPI2_TFDR0, src, wrlen);
-        src += wrlen;
+
+        //memcpy((void *)&FLEXSPI2_TFDR0, src, wrlen); !crashes sometimes!
+        uint8_t *p = (uint8_t *) &FLEXSPI2_TFDR0;
+        for (unsigned i = 0; i < wrlen; i++) *p++ = *src++;
+
+        //src += wrlen;
         length -= wrlen;
         FLEXSPI2_INTR = FLEXSPI_INTR_IPTXWE;
       }
     }
+
   }
+
   if (n & FLEXSPI_INTR_IPCMDERR) {
     Serial.printf("Error: FLEXSPI2_IPRXFSTS=%08lX\r\n", FLEXSPI2_IPRXFSTS);
   }
+
   FLEXSPI2_INTR = FLEXSPI_INTR_IPCMDDONE;
 }
 
@@ -525,16 +541,19 @@ void eraseFlashChip() {
   setupFlexSPI2();
   setupFlexSPI2Flash();
   flexspi_ip_command(11, flashBaseAddr);
-  delay(10);
 
-  Serial.println("Erasing.... (may take some time)");
+  Serial.println("Erasing... (may take some time)");
   uint32_t t = millis();
   FLEXSPI2_LUT60 = LUT0(CMD_SDR, PINS4, 0x60); //Chip erase
   flexspi_ip_command(15, flashBaseAddr);
-  waitFlash(true);
-  asm("":::"memory");
+#ifdef FLASH_MEMMAP
+  arm_dcache_delete((void*)((uint32_t)extBase + flashBaseAddr), flashCapacity);
+#endif
+  while (waitFlash(500)) {
+    Serial.print(".");
+  }
   t = millis() - t;
-  Serial.printf("Chip erased in %d seconds.\n", t / 1000);
+  Serial.printf("\nChip erased in %d seconds.\n", t / 1000);
 }
 
 //********************************************************************************************************
@@ -551,25 +570,38 @@ static u8_t spiffs_fds[32 * 4];
 static u8_t spiffs_cache_buf[(LOG_PAGE_SIZE + 32) * 4];
 
 //********************************************************************************************************
-static u32_t blocksize = 4096; //or 32k or 64k (set correct flash commands above)
+static const u32_t blocksize = 4096; //or 32k or 64k (set correct flash commands above)
 
 static s32_t my_spiffs_read(u32_t addr, u32_t size, u8_t *dst) {
+  uint8_t *p;
+  p = (uint8_t *)extBase;
+  p += addr;
+#ifdef FLASH_MEMMAP
+  memcpy(dst, p, size);
+#else
   flexspi_ip_read(5, addr, dst, size);
+#endif
   return SPIFFS_OK;
 }
 
 static s32_t my_spiffs_write(u32_t addr, u32_t size, u8_t *src) {
   flexspi_ip_command(11, flashBaseAddr);  //write enable
   flexspi_ip_write(13, addr, src, size);
+#ifdef FLASH_MEMMAP
+  arm_dcache_delete((void*)((uint32_t)extBase + addr), size);
+#endif
   waitFlash(); //TODO: Can we wait at the beginning instead?
   return SPIFFS_OK;
 }
 
 static s32_t my_spiffs_erase(u32_t addr, u32_t size) {
-  flexspi_ip_command(11, flashBaseAddr);  //write enable
   int s = size;
   while (s > 0) { //TODO: Is this loop needed, or is size max 4096?
+    flexspi_ip_command(11, flashBaseAddr);  //write enable
     flexspi_ip_command(12, addr);
+#ifdef FLASH_MEMMAP
+    arm_dcache_delete((void*)((uint32_t)extBase + addr), size);
+#endif
     addr += blocksize;
     s -= blocksize;
     waitFlash(); //TODO: Can we wait at the beginning intead?
@@ -586,7 +618,7 @@ void my_spiffs_mount() {
 
   spiffs_config cfg;
 
-  cfg.phys_size = 1024 * 1024 * 16; // use 16 MB flash TODO use ID to get capacity
+  cfg.phys_size = flashCapacity; // use 16 MB flash TODO use ID to get capacity
   cfg.phys_addr = /* 0x70000000 + */flashBaseAddr; // start spiffs here (physical adress)
   cfg.phys_erase_block = blocksize; //4K sectors
   cfg.log_block_size = cfg.phys_erase_block; // let us not complicate things
