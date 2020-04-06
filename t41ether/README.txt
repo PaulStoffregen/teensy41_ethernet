@@ -8,6 +8,7 @@ lwip/    put this in your sketchbook/libraries/
 lwip sketches
   lwip_dns/         demonstrate DNS queries
   lwip_echosrv/     TCP and UDP echo servers on port 7
+  lwip_httpd/       lwIP web server using SD lib and microSD
   lwip_iperf/       TCP iperf(v2) server on port 5001
   lwip_mcast/       multicast listener, does one chirp
   lwip_perf/        various UDP/TCP client/server tests
