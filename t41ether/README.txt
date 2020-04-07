@@ -3,11 +3,13 @@
 etherraw/   UDP additions to Paul's low-level ethernet sketch, hand-crafted UDP
             packets
 
-lwip/    put this in your sketchbook/libraries/
+lwip/            put this in your sketchbook/libraries/
+lwip-ftpd-sd/    put this in your sketchbook/libraries/  for ftpd
 
 lwip sketches
   lwip_dns/         demonstrate DNS queries
   lwip_echosrv/     TCP and UDP echo servers on port 7
+  lwip_ftpd/        lwIP ftpd server (get/put) using SD lib and lwip-ftpd-sd lib
   lwip_httpd/       lwIP web server using SD lib and microSD
   lwip_iperf/       TCP iperf(v2) server on port 5001
   lwip_mcast/       multicast listener, does one chirp
