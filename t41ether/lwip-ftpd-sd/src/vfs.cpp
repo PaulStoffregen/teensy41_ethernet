@@ -105,13 +105,10 @@ char* vfs_getcwd(vfs_t* vfs, void* dummy1, int dummy2) {
 }
 
 vfs_dir_t* vfs_opendir(vfs_t* vfs, const char* path) {
-#if 0
     vfs_dir_t *dir = new vfs_dir_t();
-    *dir = *vfs_dir_t::cwd();
-    dir->rewind();
-    return dir;
-#endif
-  return NULL;
+    *dir = SD.open(path);
+	if (*dir && dir->isDirectory()) return dir;
+    return NULL;
 }
 
 void vfs_closedir(vfs_dir_t* dir) {

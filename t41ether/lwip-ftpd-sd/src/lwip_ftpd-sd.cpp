@@ -321,7 +321,7 @@ static int sfifo_write(sfifo_t *f, const void *_buf, int len)
 struct ftpd_datastate {
 	int connected;
 	vfs_dir_t *vfs_dir;
-	vfs_dirent_t *vfs_dirent;
+	vfs_file_t *vfs_dirent;
 	vfs_file_t *vfs_file;
 	sfifo_t fifo;
 	struct tcp_pcb *msgpcb;
@@ -455,44 +455,20 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 	int len;
 
 	while (1) {
+//	File *x = &(fsd->vfs_dir->openNextFile());
+//	Serial.printf("thd xxx name %s\n", x->name());
 	if (fsd->vfs_dirent == NULL)
-		fsd->vfs_dirent = vfs_readdir(fsd->vfs_dir);
+		fsd->vfs_dirent = &(fsd->vfs_dir->openNextFile());
 
-	if (fsd->vfs_dirent) {
-		if (shortlist) {
-			len = sprintf(buffer, "%s\r\n", fsd->vfs_dirent->name);
+	if (*(fsd->vfs_dirent) ) {
+			if (fsd->vfs_dirent->isDirectory()) len = sprintf(buffer, "%s/ \r\n", fsd->vfs_dirent->name());
+				else len = sprintf(buffer, "%s  %d\r\n", fsd->vfs_dirent->name(), fsd->vfs_dirent->size());
 			if (sfifo_space(&fsd->fifo) < len) {
 				send_data(pcb, fsd);
 				return;
 			}
 			sfifo_write(&fsd->fifo, buffer, len);
 			fsd->vfs_dirent = NULL;
-		} else {
-			vfs_stat_t st;
-			vfs_time_t current_time;
-			int current_year;
-			struct tm *s_time;
-
-			time(&current_time);
-			s_time = gmtime(&current_time);
-			current_year = s_time->tm_year;
-
-			vfs_stat(fsd->msgfs->vfs, fsd->vfs_dirent->name, &st);
-			s_time = gmtime(&st.st_mtime);
-
-			if (s_time->tm_year == current_year)
-				len = sprintf(buffer, "-rw-rw-rw-   1 user     ftp  %11ld %s %02i %02i:%02i %s\r\n", st.st_size, month_table[s_time->tm_mon], s_time->tm_mday, s_time->tm_hour, s_time->tm_min, fsd->vfs_dirent->name);
-			else
-				len = sprintf(buffer, "-rw-rw-rw-   1 user     ftp  %11ld %s %02i %5i %s\r\n", st.st_size, month_table[s_time->tm_mon], s_time->tm_mday, s_time->tm_year + 1900, fsd->vfs_dirent->name);
-			if (VFS_ISDIR(st.st_mode))
-				buffer[0] = 'd';
-			if (sfifo_space(&fsd->fifo) < len) {
-				send_data(pcb, fsd);
-				return;
-			}
-			sfifo_write(&fsd->fifo, buffer, len);
-			fsd->vfs_dirent = NULL;
-		}
 	} else {
 		struct ftpd_msgstate *fsm;
 		struct tcp_pcb *msgpcb;
@@ -513,7 +489,7 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 		send_msg(msgpcb, fsm, msg226);
 		return;
 	}
-	}
+	}   // while
 }
 
 static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
