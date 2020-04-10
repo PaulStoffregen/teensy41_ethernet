@@ -56,8 +56,16 @@ ePower (ma)            132     59       100     174    100    ethernet module cu
   tests on 100mbs full-duplex Ether with linux box on switch
   W5500 SPI @37.5MHz, 2KB buffers
 
+  microSD read times (seconds)  (4.2MB file, 2KB reads)
+      T4.1 SD lib  T3.5 SdFat v1
+tftp    4.76        2.2  s
+http    3.6         0.9
+ftp     2.8         0.6  
+read()  2.76        0.26
+
 -----------------------------------------------------------------------
 References:
+https://forum.pjrc.com/threads/59776-Ethernet-and-lwip?p=230993&viewfull=1#post230993
 https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post109161
 https://forum.pjrc.com/threads/57701-USB-Host-Ethernet-Driver?p=218866&viewfull=1#post218866
 https://forum.pjrc.com/threads/54265-Teensy-4-testing-mbed-NXP-MXRT1050-EVKB-(600-Mhz-M7)
