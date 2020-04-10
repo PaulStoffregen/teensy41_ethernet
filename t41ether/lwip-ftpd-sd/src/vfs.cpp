@@ -81,6 +81,7 @@ vfs_file_t* vfs_open(vfs_t* vfs, const char* filename, const char* mode) {
         mode++;
     }
     //if (!f->open(vfs_file_t::cwd(), filename, flags)) {
+	//  ? need full path/file for SD.open
     if (! ( *f = SD.open( filename, flags))) {
         free(f);
         return NULL;
@@ -138,12 +139,13 @@ int vfs_chdir(vfs_t* vfs, const char *path) {
         if (isDirSeparator(*p) && p != cwd) *p = 0;
         res = true;
     }
-#if 0
-    if (res && vfs->chdir(cwd, true)) {
+	File f = SD.open(cwd);
+    if (res && f && f.isDirectory()) {
         free(cpy);
+		f.close();
         return 0;
     }
-#endif
+	f.close();
     strcpy(cwd, cpy);
     free(cpy);
     return 1;

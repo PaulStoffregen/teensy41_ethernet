@@ -987,7 +987,7 @@ static void cmd_mkd(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *
 		send_msg(pcb, fsm, msg501);
 		return;
 	}
-	if (vfs_mkdir(fsm->vfs, arg, VFS_IRWXU | VFS_IRWXG | VFS_IRWXO) != 0) {
+	if (! SD.mkdir(arg)) {
 		send_msg(pcb, fsm, msg550);
 	} else {
 		send_msg(pcb, fsm, msg257, arg);
@@ -1010,11 +1010,7 @@ static void cmd_rmd(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *
 		send_msg(pcb, fsm, msg550);
 		return;
 	}
-	if (!VFS_ISDIR(st.st_mode)) {
-		send_msg(pcb, fsm, msg550);
-		return;
-	}
-	if (vfs_rmdir(fsm->vfs, arg) != 0) {
+	if (! SD.rmdir(arg)) {
 		send_msg(pcb, fsm, msg550);
 	} else {
 		send_msg(pcb, fsm, msg250);
@@ -1041,7 +1037,7 @@ static void cmd_dele(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 		send_msg(pcb, fsm, msg550);
 		return;
 	}
-	if (vfs_remove(fsm->vfs, arg) != 0) {
+	if (! SD.remove(arg)) {
 		send_msg(pcb, fsm, msg550);
 	} else {
 		send_msg(pcb, fsm, msg250);
