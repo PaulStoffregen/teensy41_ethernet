@@ -39,19 +39,19 @@ TODO:
 
 --------------------------------------------------------------------
 
-                     Ethernet performance
-                  T4+W5500   T41e   1062SDK  T41USBe  T35e    info
-TCP xmit (mbs)           9     73        87      78     59
-TCP recv (mbs)          11     93        71      30     51
+                         Ethernet performance
+                   T41e   1062SDK  T41USBe  T35e  T4+W5500    info
+TCP xmit (mbs)       73        87      78     59         9 
+TCP recv (mbs)       93        71      30     51        11  
 
-UDP xmit (mbs)          11     97        97      95     85    blast 20 1000-byte pkts
-UDP xmit (pps)       21514  21186    137453   32331  66534    blast 1000 8-byte pkts
-UDP recv (mbs)           9     91        95      40     67    no-loss recv of 20 1000-byte pkts
-UDP RTT (us)           150     94       104     890    183    RTT latency of 8-byte pkts
+UDP xmit (mbs)       97        97      95     85        11   blast 20 1000-byte pkts
+UDP xmit (pps)   149476    137453   32331  66534     21514   blast 1000 8-byte pkts
+UDP recv (mbs)       91        95      40     67         9   no-loss recv of 20 1000-byte pkts
+UDP RTT (us)         94       104    1651    183       150   RTT latency of 8-byte pkts
 
-ping RTT (us)           82    120       108    2000    127
+ping RTT (us)       120       108    2000    127        82 
 
-ePower (ma)            132     59       100     174    100    ethernet module current
+ePower (ma)          59       100     174    100       132  ethernet module current
 
   tests on 100mbs full-duplex Ether with linux box on switch
   W5500 SPI @37.5MHz, 2KB buffers
