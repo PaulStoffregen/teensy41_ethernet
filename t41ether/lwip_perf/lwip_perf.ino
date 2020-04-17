@@ -352,8 +352,19 @@ err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t er
     t0 = 0;
     return 0;
   }
+#if 0
   tcp_recved(tpcb, p->tot_len);  // data processed
   bytes += p->tot_len;
+#else
+  // process q of pbuf's
+  uint32_t qbytes = 0;
+  struct pbuf *q;
+  for (q = p; q != NULL; q = q->next) {
+    qbytes += q->tot_len;
+  }
+  tcp_recved(tpcb, qbytes);  // data processed
+  bytes += qbytes;
+#endif
   pbuf_free(p);
   return 0;
 }
