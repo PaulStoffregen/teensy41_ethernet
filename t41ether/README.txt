@@ -11,11 +11,13 @@ lwip sketches
   lwip_echosrv/     TCP and UDP echo servers on port 7
   lwip_ftpd/        lwIP ftpd server (get/put) using SD lib and lwip-ftpd-sd lib
   lwip_httpd/       lwIP web server using SD lib and microSD
+  lwip_httpd_sdfat/ lwIP web server using SdFat-beta v2 and microSD
   lwip_iperf/       TCP iperf(v2) server on port 5001
   lwip_mcast/       multicast listener, does one chirp
   lwip_perf/        various UDP/TCP client/server tests
   lwip_sntp/        NTP (UDP) poll of server (default 10 minutes)
   lwip_tftpd/       tftp server (UDP) using SD lib and microSD
+  lwip_tftpd_sdfat/ tftp server (UDP) using SdFat-beta v2 and microSD
   lwip_tftpd_SPIFFS/  tftp server (UDP) using SPIFFS lib EFLASH
   lwip_webclnt/     send http GET to a web server
   lwip_websrv/      serve up embedded html and manipulate LED
@@ -57,12 +59,11 @@ ePower (ma)          59       100     174    100       132  ethernet module curr
   W5500 SPI @37.5MHz, 2KB buffers
 
   microSD read times (seconds)  (4.2MB file, 2KB reads)
-      T4.1 SD lib  T3.5 SdFat v1
-tftp    4.76        2.2  s
-http    3.6         0.9
+      T4 SD lib  T3.5 SdFatv1  T4.1 SdFatv2
+tftp    4.76        2.2          2.2 s
+http    3.6         0.9          0.9
 ftp     2.8         0.6  
-read()  2.76        0.26
-
+read()  2.76        0.26         0.19 s
 -----------------------------------------------------------------------
 References:
 https://forum.pjrc.com/threads/59776-Ethernet-and-lwip?p=230993&viewfull=1#post230993
