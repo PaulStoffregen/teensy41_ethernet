@@ -72,3 +72,5 @@ https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post10916
 https://forum.pjrc.com/threads/57701-USB-Host-Ethernet-Driver?p=218866&viewfull=1#post218866
 https://forum.pjrc.com/threads/54265-Teensy-4-testing-mbed-NXP-MXRT1050-EVKB-(600-Mhz-M7)
 https://github.com/manitou48/DUEZoo/blob/master/wizperf.txt
+
+https://forum.pjrc.com/threads/60857-T4-1-Ethernet-Library FNET NativeEthernet
