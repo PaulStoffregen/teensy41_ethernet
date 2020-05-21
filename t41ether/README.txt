@@ -66,7 +66,8 @@ ftp     2.8         0.6
 read()  2.76        0.26         0.19 s
 -----------------------------------------------------------------------
 References:
-https://forum.pjrc.com/threads/59776-Ethernet-and-lwip?p=230993&viewfull=1#post230993
+https://forum.pjrc.com/threads/60532-Teensy-4-1-Beta-Test?p=237096&viewfull=1#post237096
+https://forum.pjrc.com/threads/59776-Ethernet-and-lwip?p=230993&viewfull=1#post230993  private 
 https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post109161
 https://forum.pjrc.com/threads/57701-USB-Host-Ethernet-Driver?p=218866&viewfull=1#post218866
 https://forum.pjrc.com/threads/54265-Teensy-4-testing-mbed-NXP-MXRT1050-EVKB-(600-Mhz-M7)
