@@ -1,5 +1,7 @@
 #if defined(ARDUINO_TEENSY41)
 
+#include <string.h>
+
 #include "lwip_t41.h"
 #include "lwipopts.h"
 #include "lwip/init.h"
@@ -120,7 +122,6 @@ typedef struct
     uint16_t unused4;
 } enetbufferdesc_t;
 
-static uint32_t phy_addr;
 static uint8_t mac[ETHARP_HWADDR_LEN];
 static enetbufferdesc_t rx_ring[RX_SIZE] __attribute__((aligned(64)));
 static enetbufferdesc_t tx_ring[TX_SIZE] __attribute__((aligned(64)));
@@ -461,11 +462,21 @@ inline static void check_link_status()
 }
 
 // Pub ==========================
-
-void enet_init(uint32_t phy_addr_, uint8_t *mac_, ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw)
+void enet_getmac(uint8_t *mac)
 {
-    phy_addr = phy_addr_;
-    MEMCPY(mac, mac_, ETHARP_HWADDR_LEN);
+    uint32_t m1 = HW_OCOTP_MAC1;
+    uint32_t m2 = HW_OCOTP_MAC0;
+    mac[0] = m1 >> 8;
+    mac[1] = m1 >> 0;
+    mac[2] = m2 >> 24;
+    mac[3] = m2 >> 16;
+    mac[4] = m2 >> 8;
+    mac[5] = m2 >> 0;
+}
+
+void enet_init(ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw)
+{
+    enet_getmac(&mac);
     if (t41_netif.flags == 0)
     {
         srand(micros());

@@ -12,7 +12,8 @@ extern "C" {
    
 typedef void (*rx_frame_fn)(void*);
 
-void enet_init(uint32_t phy_addr, uint8_t *mac, ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw);
+void enet_getmac(uint8_t *mac);
+void enet_init(ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw);
 void enet_set_rx_callback(rx_frame_fn rx_cb);
 struct pbuf* enet_rx_next();
 void enet_input(struct pbuf* p_frame);
