@@ -476,7 +476,13 @@ void enet_getmac(uint8_t *mac)
 
 void enet_init(ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw)
 {
-    enet_getmac(&mac);
+    ip_addr_t zeroip = IPADDR4_INIT(IPADDR_ANY);
+
+    if(ip == NULL) ip = &zeroip;
+    if(mask == NULL) mask = &zeroip;
+    if(gw == NULL) gw = &zeroip;
+
+    enet_getmac(mac);
     if (t41_netif.flags == 0)
     {
         srand(micros());
