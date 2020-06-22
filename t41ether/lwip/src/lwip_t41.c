@@ -265,7 +265,6 @@ static void t41_low_level_init()
 
     ENET_EIMR = 0;
     
-    ENET_MSCR = ENET_MSCR_MII_SPEED(9);  // 12 is fastest which seems to work
     ENET_RCR = ENET_RCR_NLC | ENET_RCR_MAX_FL(1522) | ENET_RCR_CFEN |
         ENET_RCR_CRCFWD | ENET_RCR_PADEN | ENET_RCR_RMII_MODE |
         ENET_RCR_FCE | /*ENET_RCR_PROM |*/ ENET_RCR_MII_MODE;
