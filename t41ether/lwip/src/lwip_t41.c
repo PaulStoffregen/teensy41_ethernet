@@ -19,6 +19,18 @@
 #define BFSIZE 1536
 #define IRQ_PRIORITY 64
 
+#define ENET_ATCR_SLAVE   (1<<13)
+#define ENET_ATCR_CAPTURE (1<<11)
+#define ENET_ATCR_RESET   (1<<9)
+#define ENET_ATCR_PINPER  (1<<7)
+#define ENET_ATCR_RSVD    (1<<5)
+#define ENET_ATCR_PEREN   (1<<4)
+#define ENET_ATCR_OFFRST  (1<<3)
+#define ENET_ATCR_OFFEN   (1<<2)
+#define ENET_ATCR_ENABLE  (1<<0)
+#define ENET_ATINC_CORR_SHIFT 8
+#define ENET_ATCOR_NOCORRECTION 0
+
 /*! @brief Defines the control and status region of the receive buffer descriptor.*/
 typedef enum _enet_rx_bd_control_status
 {
@@ -300,7 +312,7 @@ static void t41_low_level_init()
     
     ENET_OPD = 0x10014;
     ENET_RSEM = 0;
-     ENET_MIBC = 0;
+    ENET_MIBC = 0;
 
     ENET_IAUR = 0;
     ENET_IALR = 0;
@@ -314,6 +326,13 @@ static void t41_low_level_init()
     ENET_ECR = 0xF0000000 | ENET_ECR_DBSWP | ENET_ECR_EN1588 | ENET_ECR_ETHEREN;
     ENET_RDAR = ENET_RDAR_RDAR;
     ENET_TDAR = ENET_TDAR_TDAR;
+
+    // 1588 clocks
+    ENET_ATCR = ENET_ATCR_RESET | ENET_ATCR_RSVD; // reset timer
+    ENET_ATPER = 4294967295; // wrap at 2^32-1
+    ENET_ATINC = 1;          // use as a cycle counter
+    ENET_ATCOR = ENET_ATCOR_NOCORRECTION;
+    ENET_ATCR = ENET_ATCR_RSVD | ENET_ATCR_ENABLE; // enable timer
     
     //phy soft reset
     //phy_mdio_write(0, 1 << 15);
@@ -337,7 +356,10 @@ static struct pbuf *t41_low_level_input(volatile enetbufferdesc_t *bdPtr)
     else
     {
         p = pbuf_alloc(PBUF_RAW, bdPtr->length, PBUF_POOL);
-        if (p) pbuf_take(p, bdPtr->buffer, p->tot_len);
+        if (p) {
+            pbuf_take(p, bdPtr->buffer, p->tot_len);
+			p->timestamp = bdPtr->timestamp;
+		}
         if (NULL == p)
             LINK_STATS_INC(link.drop);
         else
@@ -497,6 +519,13 @@ void enet_poll()
 {
     sys_check_timeouts();
     check_link_status();
+}
+
+uint32_t read_1588_timer()
+{
+    ENET_ATCR |= ENET_ATCR_CAPTURE;
+    while(ENET_ATCR & ENET_ATCR_CAPTURE) { }
+    return ENET_ATVR;
 }
 
 #endif

@@ -170,6 +170,9 @@ struct pbuf {
    * the stack itself, or pbuf->next pointers from a chain.
    */
   u16_t ref;
+
+  // RX timestamp
+  u32_t timestamp;
 };
 
 

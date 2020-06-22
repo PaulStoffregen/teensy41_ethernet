@@ -18,6 +18,7 @@ struct pbuf* enet_rx_next();
 void enet_input(struct pbuf* p_frame);
 void enet_proc_input(void);
 void enet_poll();
+uint32_t read_1588_timer();
 
 #ifdef __cplusplus
 }
