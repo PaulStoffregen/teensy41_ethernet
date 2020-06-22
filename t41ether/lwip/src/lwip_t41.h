@@ -3,8 +3,8 @@
 
 #if defined(ARDUINO_TEENSY41)
 
-#include "include/lwip/ip_addr.h"
-#include "include/lwip/pbuf.h"
+#include "lwip/ip_addr.h"
+#include "lwip/pbuf.h"
 
 #ifdef __cplusplus
 extern "C" {
