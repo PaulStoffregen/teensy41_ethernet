@@ -23,12 +23,6 @@ lwip sketches
   lwip_websrv/      serve up embedded html and manipulate LED
 
 
-To build lwip apps in IDE you must add an include path to boards.txt
- teensy41.build.flags.common=-g -Wall -ffunction-sections -fdata-sections -nostdlib -I/home/dunigan/sketchbook/libraries/lwip/src/include
- 
- And for Windows
- teensy41.build.flags.common=-g -Wall -ffunction-sections -fdata-sections -nostdlib -IT:\tCode\libraries\lwip\src\include
-
 The lwip lib (2.0.2) and apps are adapted from the 2016 T3.6 beta test of 
 limited-production ethernet shield. T41 lwIP configured to use 64-byte aligned
 5 transmit descriptors and 5 receive descriptors with 32-byte aligned packet

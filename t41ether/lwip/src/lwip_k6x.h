@@ -3,8 +3,8 @@
 
 #if defined(__MK64FX512__) || defined(__MK66FX1M0__)
 
-#include "include/lwip/ip_addr.h"
-#include "include/lwip/pbuf.h"
+#include "lwip/ip_addr.h"
+#include "lwip/pbuf.h"
 
 #ifdef __cplusplus
 extern "C" {

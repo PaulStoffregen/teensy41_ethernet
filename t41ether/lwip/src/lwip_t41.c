@@ -1,5 +1,7 @@
 #if defined(ARDUINO_TEENSY41)
 
+#include <string.h>
+
 #include "lwip_t41.h"
 #include "lwipopts.h"
 #include "lwip/init.h"
@@ -18,6 +20,18 @@
 #define TX_SIZE 5
 #define BFSIZE 1536
 #define IRQ_PRIORITY 64
+
+#define ENET_ATCR_SLAVE   (1<<13)
+#define ENET_ATCR_CAPTURE (1<<11)
+#define ENET_ATCR_RESET   (1<<9)
+#define ENET_ATCR_PINPER  (1<<7)
+#define ENET_ATCR_RSVD    (1<<5)
+#define ENET_ATCR_PEREN   (1<<4)
+#define ENET_ATCR_OFFRST  (1<<3)
+#define ENET_ATCR_OFFEN   (1<<2)
+#define ENET_ATCR_ENABLE  (1<<0)
+#define ENET_ATINC_CORR_SHIFT 8
+#define ENET_ATCOR_NOCORRECTION 0
 
 /*! @brief Defines the control and status region of the receive buffer descriptor.*/
 typedef enum _enet_rx_bd_control_status
@@ -108,7 +122,6 @@ typedef struct
     uint16_t unused4;
 } enetbufferdesc_t;
 
-static uint32_t phy_addr;
 static uint8_t mac[ETHARP_HWADDR_LEN];
 static enetbufferdesc_t rx_ring[RX_SIZE] __attribute__((aligned(64)));
 static enetbufferdesc_t tx_ring[TX_SIZE] __attribute__((aligned(64)));
@@ -265,7 +278,6 @@ static void t41_low_level_init()
 
     ENET_EIMR = 0;
     
-    ENET_MSCR = ENET_MSCR_MII_SPEED(9);  // 12 is fastest which seems to work
     ENET_RCR = ENET_RCR_NLC | ENET_RCR_MAX_FL(1522) | ENET_RCR_CFEN |
         ENET_RCR_CRCFWD | ENET_RCR_PADEN | ENET_RCR_RMII_MODE |
         ENET_RCR_FCE | /*ENET_RCR_PROM |*/ ENET_RCR_MII_MODE;
@@ -301,7 +313,7 @@ static void t41_low_level_init()
     
     ENET_OPD = 0x10014;
     ENET_RSEM = 0;
-     ENET_MIBC = 0;
+    ENET_MIBC = 0;
 
     ENET_IAUR = 0;
     ENET_IALR = 0;
@@ -315,6 +327,13 @@ static void t41_low_level_init()
     ENET_ECR = 0xF0000000 | ENET_ECR_DBSWP | ENET_ECR_EN1588 | ENET_ECR_ETHEREN;
     ENET_RDAR = ENET_RDAR_RDAR;
     ENET_TDAR = ENET_TDAR_TDAR;
+
+    // 1588 clocks
+    ENET_ATCR = ENET_ATCR_RESET | ENET_ATCR_RSVD; // reset timer
+    ENET_ATPER = 4294967295; // wrap at 2^32-1
+    ENET_ATINC = 1;          // use as a cycle counter
+    ENET_ATCOR = ENET_ATCOR_NOCORRECTION;
+    ENET_ATCR = ENET_ATCR_RSVD | ENET_ATCR_ENABLE; // enable timer
     
     //phy soft reset
     //phy_mdio_write(0, 1 << 15);
@@ -338,7 +357,10 @@ static struct pbuf *t41_low_level_input(volatile enetbufferdesc_t *bdPtr)
     else
     {
         p = pbuf_alloc(PBUF_RAW, bdPtr->length, PBUF_POOL);
-        if (p) pbuf_take(p, bdPtr->buffer, p->tot_len);
+        if (p) {
+            pbuf_take(p, bdPtr->buffer, p->tot_len);
+			p->timestamp = bdPtr->timestamp;
+		}
         if (NULL == p)
             LINK_STATS_INC(link.drop);
         else
@@ -440,11 +462,27 @@ inline static void check_link_status()
 }
 
 // Pub ==========================
-
-void enet_init(uint32_t phy_addr_, uint8_t *mac_, ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw)
+void enet_getmac(uint8_t *mac)
 {
-    phy_addr = phy_addr_;
-    MEMCPY(mac, mac_, ETHARP_HWADDR_LEN);
+    uint32_t m1 = HW_OCOTP_MAC1;
+    uint32_t m2 = HW_OCOTP_MAC0;
+    mac[0] = m1 >> 8;
+    mac[1] = m1 >> 0;
+    mac[2] = m2 >> 24;
+    mac[3] = m2 >> 16;
+    mac[4] = m2 >> 8;
+    mac[5] = m2 >> 0;
+}
+
+void enet_init(ip_addr_t *ip, ip_addr_t *mask, ip_addr_t *gw)
+{
+    ip_addr_t zeroip = IPADDR4_INIT(IPADDR_ANY);
+
+    if(ip == NULL) ip = &zeroip;
+    if(mask == NULL) mask = &zeroip;
+    if(gw == NULL) gw = &zeroip;
+
+    enet_getmac(mac);
     if (t41_netif.flags == 0)
     {
         srand(micros());
@@ -498,6 +536,13 @@ void enet_poll()
 {
     sys_check_timeouts();
     check_link_status();
+}
+
+uint32_t read_1588_timer()
+{
+    ENET_ATCR |= ENET_ATCR_CAPTURE;
+    while(ENET_ATCR & ENET_ATCR_CAPTURE) { }
+    return ENET_ATVR;
 }
 
 #endif
