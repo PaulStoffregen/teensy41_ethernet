@@ -2,6 +2,16 @@
 // https://forum.pjrc.com/threads/45647-k6x-LAN8720(A)-amp-lwip
 // lwiperf
 
+// for maximum speed in exchange for more memory usage, set these in lwipopts.h
+// #define TCP_SND_BUF                 (8 * TCP_MSS)
+// #define MEMP_NUM_TCP_SEG                40
+// #define TCP_WND                         (8 * TCP_MSS)
+// 8*1460 = 11kb window size, which can fill up a 100Mbit pipe with a 0.9ms rtt.
+// Higher RTTs will require a larger window size
+
+// client is iperf version 2
+// command line: iperf -c [ip] -i1 -l 1460 -r
+
 #include "lwip_t41.h"
 #include "lwip/inet.h"
 #include "lwip/dhcp.h"
