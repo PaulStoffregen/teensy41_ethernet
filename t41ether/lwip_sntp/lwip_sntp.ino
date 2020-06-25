@@ -1,4 +1,4 @@
-// stepl's lwIP 2.0.2, for IDE add -I to boards.txt
+// stepl's lwIP 2.0.2
 // https://forum.pjrc.com/threads/45647-k6x-LAN8720(A)-amp-lwip
 
 #include <time.h>
@@ -10,13 +10,7 @@
 #include "lwip/apps/sntp.h"
 
 #define LOG _printf
-#define PHY_ADDR 0 /*for read/write PHY registers (check link status,...)*/
-#define DHCP 0
-#define IP "192.168.1.19"
-#define MASK "255.255.255.0"
-#define GW "192.168.1.1"
 
-//#define DNS1 "192.168.1.1"
 #define NTP1 "192.168.1.4"
 //#define NTP1 "pool.ntp.org"
 #define TZ "EST5EDT" //Timezone (https://github.com/kerlnel/newlib/blob/master/newlib/libc/time/tzset.c)
@@ -145,61 +139,6 @@ extern "C" {
     }
 }
 
-#pragma region teensyMac
-#if 0
-static uint32_t getTeensySerial(void)
-{
-    static uint32_t serial = 0;
-
-    if (serial == 0)
-    {
-        __disable_irq();
-#if defined(HAS_KINETIS_FLASH_FTFA) || defined(HAS_KINETIS_FLASH_FTFL)
-        FTFL_FSTAT = FTFL_FSTAT_RDCOLERR | FTFL_FSTAT_ACCERR | FTFL_FSTAT_FPVIOL;
-        FTFL_FCCOB0 = 0x41;
-        FTFL_FCCOB1 = 15;
-        FTFL_FSTAT = FTFL_FSTAT_CCIF;
-        while (!(FTFL_FSTAT & FTFL_FSTAT_CCIF)); // wait
-        _serial = *(uint32_t *)&FTFL_FCCOB7;
-#elif defined(HAS_KINETIS_FLASH_FTFE)
-        kinetis_hsrun_disable();
-        FTFL_FSTAT = FTFL_FSTAT_RDCOLERR | FTFL_FSTAT_ACCERR | FTFL_FSTAT_FPVIOL;
-        *(uint32_t *)&FTFL_FCCOB3 = 0x41070000;
-        FTFL_FSTAT = FTFL_FSTAT_CCIF;
-        while (!(FTFL_FSTAT & FTFL_FSTAT_CCIF)); // wait
-        serial = *(uint32_t *)&FTFL_FCCOBB;
-        kinetis_hsrun_enable();
-#endif
-        __enable_irq();
-    }
-    return serial;
-}
-
-static void teensySN(uint8_t *sn)
-{
-    uint32_t serial = getTeensySerial();
-    sn[0] = serial >> 24;
-    sn[1] = serial >> 16;
-    sn[2] = serial >> 8;
-    sn[3] = serial;
-}
-#endif
-
-static void teensyMAC(uint8_t *mac)
-{
-  uint32_t m1 = HW_OCOTP_MAC1;
-  uint32_t m2 = HW_OCOTP_MAC0;
-  mac[0] = m1 >> 8;
-  mac[1] = m1 >> 0;
-  mac[2] = m2 >> 24;
-  mac[3] = m2 >> 16;
-  mac[4] = m2 >> 8;
-  mac[5] = m2 >> 0;
-}
-
-
-#pragma endregion
-
 #pragma region lwip
 
 static void netif_status_callback(struct netif *netif)
@@ -222,41 +161,14 @@ void setup()
     Serial.begin(115200);
     while (!Serial) delay(100);
 
-    LOG("PHY_ADDR %d\n", PHY_ADDR);
-    uint8_t mac[6];
-    teensyMAC(mac);
-    LOG("MAC_ADDR %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
-    LOG("DHCP is %s\n", DHCP == 1 ? "on" : "off");
-
-    ip_addr_t ip, mask, gateway;
-    if (DHCP == 1)
-    {
-        ip = IPADDR4_INIT(IPADDR_ANY);
-        mask = IPADDR4_INIT(IPADDR_ANY);
-        gateway = IPADDR4_INIT(IPADDR_ANY);
-    }
-    else
-    {
-        inet_aton(IP, &ip);
-        inet_aton(MASK, &mask);
-        inet_aton(GW, &gateway);
-    }
-    enet_init(PHY_ADDR, mac, &ip, &mask, &gateway);
+    enet_init(NULL, NULL, NULL);
     netif_set_status_callback(netif_default, netif_status_callback);
     netif_set_link_callback(netif_default, link_status_callback);
     netif_set_up(netif_default);
 
-    if (DHCP == 1)
-        dhcp_start(netif_default);
+    dhcp_start(netif_default);
         
     while (!netif_is_link_up(netif_default)) loop(); // await on link up
-
-#ifdef DNS1
-    static ip_addr_t dns1;
-    inet_aton(DNS1, &dns1);
-    dns_setserver(0, &dns1);
-#endif
 
 #ifdef NTP1
     sntp_setservername(0, (char*)NTP1);

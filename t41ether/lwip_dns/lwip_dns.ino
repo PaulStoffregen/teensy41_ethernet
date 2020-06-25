@@ -1,35 +1,12 @@
-// stepl's lwIP 2.0.2, for IDE add -I to boards.txt
+// stepl's lwIP 2.0.2
 // https://forum.pjrc.com/threads/45647-k6x-LAN8720(A)-amp-lwip
-
 
 #include "lwip_t41.h"
 #include "lwip/inet.h"
 #include "lwip/dhcp.h"
 #include "lwip/dns.h"
 
-#define PHY_ADDR 0 /*for read/write PHY registers (check link status,...)*/
-#define DHCP 0
-#define IP "192.168.1.19"
-#define MASK "255.255.255.0"
-#define GW "192.168.1.1"
-
-#define DNS1 "192.168.1.1"
-
 #define LOG Serial.printf
-
-
-static void teensyMAC(uint8_t *mac)
-{
-  uint32_t m1 = HW_OCOTP_MAC1;
-  uint32_t m2 = HW_OCOTP_MAC0;
-  mac[0] = m1 >> 8;
-  mac[1] = m1 >> 0;
-  mac[2] = m2 >> 24;
-  mac[3] = m2 >> 16;
-  mac[4] = m2 >> 8;
-  mac[5] = m2 >> 0;
-}
-
 
 #pragma region lwip
 
@@ -64,7 +41,7 @@ static void sntp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *
   }
 }
 
-char * hosts[] = {"tnlandforms.us", "google.com", NULL};
+const char * hosts[] = {"tnlandforms.us", "google.com", NULL};
 void do_dns() {
   err_t err;
   uint32_t t;
@@ -81,6 +58,8 @@ void do_dns() {
       LOG("DNS x %s\n", inet_ntoa(dnsaddr));
     } else if (err == ERR_OK) {
       LOG("DNS ok %s\n", inet_ntoa(dnsaddr));
+    } else {
+      LOG("DNS status = %d\n", err);
     }
     t = millis();
     while ( millis() - t < 5000); loop(); // ether friendly delay
@@ -94,42 +73,15 @@ void setup()
   Serial.begin(115200);
   while (!Serial) delay(100);
 
-  LOG("PHY_ADDR %d\n", PHY_ADDR);
-  uint8_t mac[6];
-  teensyMAC(mac);
-  LOG("MAC_ADDR %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
-  LOG("DHCP is %s\n", DHCP == 1 ? "on" : "off");
-
-  ip_addr_t ip, mask, gateway;
-  if (DHCP == 1)
-  {
-    ip = IPADDR4_INIT(IPADDR_ANY);
-    mask = IPADDR4_INIT(IPADDR_ANY);
-    gateway = IPADDR4_INIT(IPADDR_ANY);
-  }
-  else
-  {
-    inet_aton(IP, &ip);
-    inet_aton(MASK, &mask);
-    inet_aton(GW, &gateway);
-  }
-  enet_init(PHY_ADDR, mac, &ip, &mask, &gateway);
+  enet_init(NULL, NULL, NULL);
   netif_set_status_callback(netif_default, netif_status_callback);
   netif_set_link_callback(netif_default, link_status_callback);
   netif_set_up(netif_default);
 
-  if (DHCP == 1)
-    dhcp_start(netif_default);
+  dhcp_start(netif_default);
 
   while (!netif_is_link_up(netif_default)) loop(); // await on link up
 
-#ifdef DNS1
-  //  need LWIP_DNS and LWIP_UDP
-  static ip_addr_t dns1;
-  inet_aton(DNS1, &dns1);
-  dns_setserver(0, &dns1);
-#endif
   do_dns();
 }
 

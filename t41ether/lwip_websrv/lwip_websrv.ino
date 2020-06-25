@@ -1,5 +1,4 @@
 // lwip webserv
-// to use IDE hack -I into boards.txt
 #include "lwip_t41.h"
 #include "lwip/inet.h"
 #include "lwip/dhcp.h"
@@ -8,25 +7,6 @@
 
 #define swap2 __builtin_bswap16
 #define swap4 __builtin_bswap32
-
-#define PHY_ADDR 0 /*for read/write PHY registers (check link status,...)*/
-#define DHCP 0
-#define IP "192.168.1.19"
-#define MASK "255.255.255.0"
-#define GW "192.168.1.1"
-
-static void teensyMAC(uint8_t *mac)
-{
-  uint32_t m1 = HW_OCOTP_MAC1;
-  uint32_t m2 = HW_OCOTP_MAC0;
-  mac[0] = m1 >> 8;
-  mac[1] = m1 >> 0;
-  mac[2] = m2 >> 24;
-  mac[3] = m2 >> 16;
-  mac[4] = m2 >> 8;
-  mac[5] = m2 >> 0;
-}
-
 
 static void netif_status_callback(struct netif *netif)
 {
@@ -54,9 +34,9 @@ static int sendqlth;
 
 
 // web page
-char *msg1 = "HTTP/1.0 200 OK\nContent-type:text/html\n\n"
+const char *msg1 = "HTTP/1.0 200 OK\nContent-type:text/html\n\n"
              "<H1>T41 web server</H1>\n";
-char *msg2 = "<br>Click <a href=\"/LEDON\">here</a> turn the LED on"
+const char *msg2 = "<br>Click <a href=\"/LEDON\">here</a> turn the LED on"
              "<br>Click <a href=\"/LEDOFF\">here</a> turn the LED off\n";
 
 void web_close(struct tcp_pcb * tpcb) {
@@ -82,7 +62,7 @@ err_t sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
   return 0;
 }
 
-void tcp_sendstr(struct tcp_pcb * tpcb, char *str) {
+void tcp_sendstr(struct tcp_pcb * tpcb, const char *str) {
   // we're not expecting write to fail for our small web reply < sendqlth
 
   tcp_write(tpcb, str, strlen(str), TCP_WRITE_FLAG_COPY); // PUSH
@@ -160,33 +140,12 @@ void setup()
   while (!Serial) delay(100);
   pinMode(LEDpin, OUTPUT);
 
-  Serial.printf("PHY_ADDR %d\n", PHY_ADDR);
-  uint8_t mac[6];
-  teensyMAC(mac);
-  Serial.printf("MAC_ADDR %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
-  Serial.printf("DHCP is %s\n", DHCP == 1 ? "on" : "off");
-
-  ip_addr_t ip, mask, gateway;
-  if (DHCP == 1)
-  {
-    ip = IPADDR4_INIT(IPADDR_ANY);
-    mask = IPADDR4_INIT(IPADDR_ANY);
-    gateway = IPADDR4_INIT(IPADDR_ANY);
-  }
-  else
-  {
-    inet_aton(IP, &ip);
-    inet_aton(MASK, &mask);
-    inet_aton(GW, &gateway);
-  }
-  enet_init(PHY_ADDR, mac, &ip, &mask, &gateway);
+  enet_init(NULL, NULL, NULL);
   netif_set_status_callback(netif_default, netif_status_callback);
   netif_set_link_callback(netif_default, link_status_callback);
   netif_set_up(netif_default);
 
-  if (DHCP == 1)
-    dhcp_start(netif_default);
+  dhcp_start(netif_default);
 
   while (!netif_is_link_up(netif_default)) loop(); // await on link up
   websrv();
