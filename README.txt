@@ -1,12 +1,12 @@
     Teensy 4.1 ethernet :: https://forum.pjrc.com/threads/59776-Ethernet-and-lwip
 
-etherraw/   UDP additions to Paul's low-level ethernet sketch, hand-crafted UDP
-            packets
+put this repo in your sketchbook/libraries/
 
-lwip/            put this in your sketchbook/libraries/
-lwip-ftpd-sd/    put this in your sketchbook/libraries/  for ftpd
+libraries/lwip-ftpd-sd/    put this in your sketchbook/libraries/  for ftpd
 
-lwip sketches
+Things under examples/
+  teensy41_ethernet/ Paul's low-level ethernet sketch with hand-crafted packets
+  etherraw/         UDP additions to Paul's low-level ethernet sketch, hand-crafted UDP packets
   lwip_dns/         demonstrate DNS queries
   lwip_echosrv/     TCP and UDP echo servers on port 7
   lwip_ftpd/        lwIP ftpd server (get/put) using SD lib and lwip-ftpd-sd lib
@@ -21,6 +21,7 @@ lwip sketches
   lwip_tftpd_SPIFFS/  tftp server (UDP) using SPIFFS lib EFLASH
   lwip_webclnt/     send http GET to a web server
   lwip_websrv/      serve up embedded html and manipulate LED
+  lwip_1588_timer/  read the 1588/PTP timer
 
 
 The lwip lib (2.0.2) and apps are adapted from the 2016 T3.6 beta test of 
