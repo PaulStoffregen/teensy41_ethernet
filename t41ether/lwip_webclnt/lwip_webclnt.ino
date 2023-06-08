@@ -176,7 +176,7 @@ void setup()
     inet_aton(MASK, &mask);
     inet_aton(GW, &gateway);
   }
-  enet_init(PHY_ADDR, mac, &ip, &mask, &gateway);
+  enet_init(&ip, &mask, &gateway);
   netif_set_status_callback(netif_default, netif_status_callback);
   netif_set_link_callback(netif_default, link_status_callback);
   netif_set_up(netif_default);
